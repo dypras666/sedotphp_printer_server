@@ -1,0 +1,15 @@
+graph TD
+    A[Mulai] --> B[User melakukan transaksi di aplikasi kasir online]
+    B --> C[User memilih opsi 'Cetak Struk']
+    C --> D{Apakah printer tersedia?}
+    D -->|Ya| E[Aplikasi mengirim permintaan cetak ke localhost:1717/print]
+    D -->|Tidak| F[Tampilkan pesan error: Printer tidak tersedia]
+    E --> G[Server lokal menerima permintaan]
+    G --> H[Server lokal memproses data struk]
+    H --> I[Server lokal mengirim perintah ke printer]
+    I --> J{Apakah pencetakan berhasil?}
+    J -->|Ya| K[Tampilkan pesan: Struk berhasil dicetak]
+    J -->|Tidak| L[Tampilkan pesan error: Gagal mencetak struk]
+    K --> M[Selesai]
+    L --> M
+    F --> M

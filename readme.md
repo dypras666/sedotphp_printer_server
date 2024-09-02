@@ -10,6 +10,31 @@ Mosys Printer adalah aplikasi yang menggabungkan GUI berbasis PyQt5 untuk desain
 - Server Flask untuk menangani permintaan cetak melalui HTTP
 - Mendukung berbagai ukuran kertas dan tata letak yang dapat disesuaikan
 
+## Alur Kerja Aplikasi
+
+Berikut adalah diagram alur yang menunjukkan proses dari desain template hingga pencetakan struk:
+
+```mermaid
+graph TD
+    A[Mulai] --> B[Buka GUI Mosys Printer]
+    B --> C[Desain template struk]
+    C --> D[Preview template]
+    D --> E{Template OK?}
+    E -->|Tidak| C
+    E -->|Ya| F[Pilih printer]
+    F --> G[Simpan konfigurasi]
+    G --> H[Jalankan server Flask]
+    H --> I[Terima permintaan cetak via HTTP]
+    I --> J[Proses data struk]
+    J --> K[Generate struk sesuai template]
+    K --> L[Kirim perintah ke printer]
+    L --> M{Pencetakan berhasil?}
+    M -->|Ya| N[Kirim respons sukses]
+    M -->|Tidak| O[Kirim respons error]
+    N --> P[Selesai]
+    O --> P
+```
+
 ## Persyaratan Sistem
 
 - Windows 10 atau yang lebih baru
