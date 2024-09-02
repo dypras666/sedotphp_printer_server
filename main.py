@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
             print("Invalid JSON in mosys.json")
 
     def initUI(self):
-        self.setWindowTitle('Receipt Designer and Printer')
+        self.setWindowTitle('Mosys Printer')
         self.setGeometry(100, 100, 800, 600)
 
         central_widget = QWidget()
@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
             <li><code>alamat_toko</code>: Store address (string)</li>
             <li><code>no_hp</code>: Store phone number (string)</li>
             <li><code>nama_kasir</code>: Cashier name (string)</li>
+            <li><code>code</code>: Purchase code (string)</li>
             <li><code>tanggal</code>: Transaction date and time (string, format: "YYYY-MM-DD HH:MM:SS")</li>
             <li><code>items</code>: List of purchased items (JSON string array)</li>
             <li><code>notes</code>: Additional notes (string, optional)</li>
@@ -152,10 +153,14 @@ class MainWindow(QMainWindow):
         self.cashier_format = QLineEdit(self.receipt_template.template['cashier_format'])
         form_layout.addRow("Cashier Format:", self.cashier_format)
 
+        self.code_format = QLineEdit(self.receipt_template.template['code_format'])
+        form_layout.addRow("Code Format:", self.code_format)
+
         self.date_format = QLineEdit(self.receipt_template.template['date_format'])
         form_layout.addRow("Date Format:", self.date_format)
 
-        self.item_format = QLineEdit(self.receipt_template.template['item_format'])
+        self.item_format = QTextEdit()
+        self.item_format.setPlainText(self.receipt_template.template['item_format'])
         form_layout.addRow("Item Format:", self.item_format)
 
         self.summary_format = QTextEdit()
@@ -230,8 +235,9 @@ class MainWindow(QMainWindow):
             'font_size': self.font_size.value(),
             'header_format': self.header_format.toPlainText(),
             'cashier_format': self.cashier_format.text(),
+            'code_format': self.code_format.text(),
             'date_format': self.date_format.text(),
-            'item_format': self.item_format.text(),
+            'item_format': self.item_format.toPlainText(),
             'summary_format': self.summary_format.toPlainText(),
             'footer_format': self.footer_format.toPlainText()
         }
@@ -246,6 +252,7 @@ class MainWindow(QMainWindow):
             'alamat_toko': 'Jl. Contoh No. 123',
             'no_hp': '08123456789',
             'nama_kasir': 'John Doe',
+            'code': '12121211',
             'tanggal': '2024-09-02 15:30:00',
             'items': [
                 {

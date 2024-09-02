@@ -4,9 +4,21 @@ from flask import Flask, request, jsonify
 import win32print
 import win32con
 import logging
+import locale
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Set the locale to Indonesian
+locale.setlocale(locale.LC_ALL, 'id_ID.UTF-8')
+
+def format_rupiah(amount):
+    # Bulatkan ke bilangan bulat terdekat
+    rounded_amount = round(amount)
+    # Format sebagai mata uang tanpa simbol dan tanpa desimal
+    formatted = locale.currency(rounded_amount, grouping=True, symbol='')
+    # Hilangkan koma dan dua angka di belakangnya
+    return formatted.split(',')[0]
 
 class ReceiptTemplate:
     def __init__(self):
@@ -15,8 +27,9 @@ class ReceiptTemplate:
             'font_size': 12,
             'header_format': '{nama_toko}\n{alamat_toko}\nTelp: {no_hp}',
             'cashier_format': 'Kasir: {nama_kasir}',
+            'code_format': 'No : {code}',
             'date_format': 'Tanggal: {tanggal}',
-            'item_format': '{nama_produk:<20} {qty:>3} {satuan:<3} x {harga:>7} - {diskon:>5} = {total_harga:>8}',
+            'item_format': '{nama_produk:<20} {qty:>3} {satuan:<3} x {harga:>12} - {diskon:>8} = {total_harga:>12}',
             'summary_format': 'Total Item: {total_item}\nTotal Diskon: {total_diskon}\nTotal Harga: {total_harga}',
             'footer_format': 'Notes: {notes}'
         }
@@ -38,8 +51,17 @@ class ReceiptTemplate:
         self.template.update(kwargs)
         self.save_template()
 
+    def get_paper_width(self):
+        return 48 if self.template['paper_size'] == '58mm' else 48
+        
+    def truncate_product_name(self, name, max_length=10):
+        if len(name) > max_length:
+            return name[:max_length-3] + '...'
+        return name
+
     def generate_receipt(self, data):
         receipt = []
+        paper_width = self.get_paper_width()  # Menggunakan metode yang sudah ada untuk mendapatkan lebar kertas
 
         # Header
         receipt.append(self.template['header_format'].format(
@@ -50,24 +72,51 @@ class ReceiptTemplate:
 
         # Cashier and Date
         receipt.append(self.template['cashier_format'].format(nama_kasir=data.get('nama_kasir', '')))
+        receipt.append(self.template['code_format'].format(code=data.get('code', '')))
         receipt.append(self.template['date_format'].format(tanggal=data.get('tanggal', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))))
 
         # Items
-        receipt.append('\n' + '-' * 40)
+        receipt.append('-' * paper_width)
+        max_product_name_length = 20 if paper_width == 32 else 30  # Lebih panjang untuk kertas 80mm
         for item in data.get('items', []):
-            receipt.append(self.template['item_format'].format(**item))
-        receipt.append('-' * 40)
+            formatted_item = item.copy()
+            formatted_item['nama_produk'] = self.truncate_product_name(item['nama_produk'], max_product_name_length)
+            formatted_item['harga'] = format_rupiah(item['harga'])
+            formatted_item['diskon'] = format_rupiah(item['diskon'])
+            formatted_item['total_harga'] = format_rupiah(item['total_harga'])
+            
+            if paper_width == 32:  # 58mm paper
+                item_line1 = f"{formatted_item['nama_produk']}"
+                item_line2 = f"{formatted_item['qty']:>2} {formatted_item['satuan']:<2} x{formatted_item['harga']:>8}"
+                item_line3 = f"-{formatted_item['diskon']:>7} ={formatted_item['total_harga']:>9}"
+                
+                receipt.append(item_line1)
+                receipt.append(item_line2)
+                receipt.append(item_line3)
+            else:  # 80mm paper
+                item_line = self.template['item_format'].format(**formatted_item)
+                receipt.append(item_line)
+        
+        receipt.append('-' * paper_width)
 
         # Summary
-        receipt.append(self.template['summary_format'].format(
-            total_item=sum(item['qty'] for item in data.get('items', [])),
-            total_diskon=sum(item['diskon'] for item in data.get('items', [])),
-            total_harga=sum(item['total_harga'] for item in data.get('items', []))
-        ))
+        total_item = sum(item['qty'] for item in data.get('items', []))
+        total_diskon = sum(item['diskon'] for item in data.get('items', []))
+        total_harga = sum(item['total_harga'] for item in data.get('items', []))
+        
+        summary = self.template['summary_format'].format(
+            total_item=total_item,
+            total_diskon=format_rupiah(total_diskon),
+            total_harga=format_rupiah(total_harga)
+        )
+        receipt.extend(summary.split('\n'))
 
         # Footer
         if 'notes' in data:
-            receipt.append('\n' + self.template['footer_format'].format(notes=data['notes']))
+            footer = self.template['footer_format'].format(notes=data['notes'])
+            # Wrap long notes
+            wrapped_footer = [footer[i:i+paper_width] for i in range(0, len(footer), paper_width)]
+            receipt.extend(wrapped_footer)
 
         return '\n'.join(receipt)
 
@@ -161,6 +210,7 @@ def print_receipt():
             'alamat_toko': request.form.get('alamat_toko'),
             'no_hp': request.form.get('no_hp'),
             'nama_kasir': request.form.get('nama_kasir'),
+            'code': request.form.get('code'),
             'tanggal': request.form.get('tanggal'),
             'items': json.loads(request.form.get('items', '[]')),
             'notes': request.form.get('notes')
@@ -169,11 +219,19 @@ def print_receipt():
         if not data['nama_toko']:
             return jsonify({"error": "No data provided"}), 400
         
+        # Convert numeric values in items to float for proper formatting
+        for item in data['items']:
+            item['harga'] = float(item['harga'])
+            item['diskon'] = float(item['diskon'])
+            item['total_harga'] = float(item['total_harga'])
+        
         receipt_text = receipt_template.generate_receipt(data)
         result, status_code = printer_manager.print_text(receipt_text)
         return jsonify({"message": result}), status_code
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON in 'items' field"}), 400
+    except ValueError:
+        return jsonify({"error": "Invalid numeric value in items"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
