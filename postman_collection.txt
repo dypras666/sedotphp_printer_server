@@ -1,0 +1,153 @@
+{
+	"info": {
+		"_postman_id": "unique-id-here",
+		"name": "Receipt Printer API",
+		"description": "Collection for testing Receipt Printer API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Printers",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:1717/printers",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1717",
+					"path": [
+						"printers"
+					]
+				},
+				"description": "Get a list of available printers"
+			},
+			"response": []
+		},
+		{
+			"name": "Set Printer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"printer_name\": \"POS-80\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1717/set_printer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1717",
+					"path": [
+						"set_printer"
+					]
+				},
+				"description": "Set the active printer"
+			},
+			"response": []
+		},
+		{
+			"name": "Print Receipt",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "nama_toko",
+							"value": "Toko ABC",
+							"type": "text"
+						},
+						{
+							"key": "alamat_toko",
+							"value": "Jl. Contoh No. 123",
+							"type": "text"
+						},
+						{
+							"key": "no_hp",
+							"value": "08123456789",
+							"type": "text"
+						},
+						{
+							"key": "nama_kasir",
+							"value": "John Doe",
+							"type": "text"
+						},
+						{
+							"key": "tanggal",
+							"value": "2024-09-02 15:30:00",
+							"type": "text"
+						},
+						{
+							"key": "items",
+							"value": "[{\"nama_produk\":\"Produk A\",\"qty\":2,\"satuan\":\"pcs\",\"harga\":10000,\"diskon\":1000,\"total_harga\":19000},{\"nama_produk\":\"Produk B\",\"qty\":1,\"satuan\":\"pcs\",\"harga\":15000,\"diskon\":0,\"total_harga\":15000}]",
+							"type": "text"
+						},
+						{
+							"key": "notes",
+							"value": "Terima kasih telah berbelanja!",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:1717/print",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1717",
+					"path": [
+						"print"
+					]
+				},
+				"description": "Print a receipt"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Template",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"paper_size\": \"80mm\",\n    \"font_size\": 12,\n    \"header_format\": \"{nama_toko}\\n{alamat_toko}\\nTelp: {no_hp}\",\n    \"cashier_format\": \"Kasir: {nama_kasir}\",\n    \"date_format\": \"Tanggal: {tanggal}\",\n    \"item_format\": \"{nama_produk:<20} {qty:>3} {satuan:<3} x {harga:>7} - {diskon:>5} = {total_harga:>8}\",\n    \"summary_format\": \"Total Item: {total_item}\\nTotal Diskon: {total_diskon}\\nTotal Harga: {total_harga}\",\n    \"footer_format\": \"Notes: {notes}\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1717/update_template",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1717",
+					"path": [
+						"update_template"
+					]
+				},
+				"description": "Update the receipt template"
+			},
+			"response": []
+		}
+	]
+}

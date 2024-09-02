@@ -1,0 +1,10 @@
+{
+  "paper_size": "80mm",
+  "font_size": 12,
+  "header_format": "{nama_toko}\n{alamat_toko}\nTelp: {no_hp}",
+  "cashier_format": "Kasir: {nama_kasir}",
+  "date_format": "Tanggal: {tanggal}",
+  "item_format": "{nama_produk:<20} {qty:>3} {satuan:<3} x {harga:>7} - {diskon:>5} = {total_harga:>8}",
+  "summary_format": "Total Item: {total_item}\nTotal Diskon: {total_diskon}\nTotal Harga: {total_harga}",
+  "footer_format": "Notes: {notes}"
+}
